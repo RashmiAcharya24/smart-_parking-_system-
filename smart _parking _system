@@ -1,0 +1,155 @@
+#include <SoftwareSerial.h>
+#include <Servo.h>
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(13, 12, 11, 10, 9, 8);
+
+// Define pins for IR sensors, LEDs, and servo
+const int entranceSensor = A0;
+const int slotSensor1 = A1;
+const int slotSensor2 = A2;
+const int slotSensor3 = A3;
+const int red = 6;
+const int green = 5;
+const int yellow = 4;
+
+
+// Servo motor setup for gate control
+Servo gateServo;
+const int servoPin = 7;
+
+// Variables to track parking slots
+int slot1Status = 0;
+int slot2Status = 0;
+int slot3Status = 0;
+int totalSlots = 3;
+
+void setup() 
+{
+  lcd.begin(16, 2);    
+  Serial.begin(9600); // Initialize LCD
+  gateServo.attach(servoPin); // Attach servo motor to pin
+  gateServo.write(0); // Keep gate closed initially
+  pinMode(entranceSensor, INPUT);
+  pinMode(slotSensor1, INPUT);
+  pinMode(slotSensor2, INPUT);
+  pinMode(slotSensor3, INPUT);
+  pinMode(red, OUTPUT);
+  pinMode(green, OUTPUT);
+  pinMode(yellow, OUTPUT);
+  lcd.print("Parking System");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop()
+{
+  // Read the slot sensors to check if slots are occupied
+  slot1Status = analogRead(slotSensor1);
+  slot2Status = analogRead(slotSensor2);
+  slot3Status = analogRead(slotSensor3);
+  //Serial.print(slot1Status);
+  // Update LED indicators based on slot occupancy
+  updateSlotIndicators();
+
+  // Calculate available slots
+  int availableSlots = totalSlots - (slot1Status + slot2Status + slot3Status);
+
+  // Display available slots on the LCD
+  lcd.setCursor(0, 0);
+  lcd.print("Available Slots:");
+  lcd.setCursor(0, 1);
+  lcd.print(availableSlots);
+
+  // Entrance control logic
+  int entranceStatus = digitalRead(entranceSensor);
+  if (entranceStatus < 100 )
+   {
+      // Open gate if a car is detected and there are available slots
+      gateServo.write(90);
+      delay(3000); // Keep gate open for 3 seconds
+      gateServo.write(0);
+   } 
+  if ((availableSlots < 0)&& (availableSlots > -150))
+  {
+    // Display "Full" message if no slots are available
+    lcd.setCursor(0, 1);
+    lcd.print("Parking Full ");
+  }
+  
+  delay(500);
+}
+
+// Function to update LED indicators based on slot occupancy
+void updateSlotIndicators() 
+{
+  // Slot 1 LED
+  if (slot1Status < 100) 
+  {
+    lcd.setCursor(0, 0);
+    lcd.print(" Slots:1");
+    lcd.setCursor(0, 1);
+    lcd.print("Occupied");
+    digitalWrite(yellow, HIGH);
+    digitalWrite(red, LOW);
+    digitalWrite(green, LOW);
+    Serial.print("Slot 1 is Occupied");
+    delay(2000);
+    lcd.clear();
+  } 
+  // else {
+  // digitalWrite(redLed1, LOW);
+  // digitalWrite(greenLed1, HIGH);
+  // }
+
+  // Slot 2 LED
+  if (slot2Status < 100) 
+  {
+    lcd.setCursor(0, 0);
+    lcd.print(" Slots:2");
+    lcd.setCursor(0, 1);
+    lcd.print("Occupied");
+    digitalWrite(red, LOW);
+    digitalWrite(green, HIGH);
+    digitalWrite(yellow, LOW);
+    Serial.print("Slot 2 is Occupied");
+    delay(2000);
+    lcd.clear();
+  } 
+  // else {
+  // digitalWrite(redLed2, LOW);
+  // digitalWrite(greenLed2, HIGH);
+  // }
+
+  // Slot 3 LED
+  if (slot3Status < 100)
+  {
+    lcd.setCursor(0, 0);
+    lcd.print(" Slots:3");
+    lcd.setCursor(0, 1);
+    lcd.print("Occupied");
+    digitalWrite(red, HIGH);
+    digitalWrite(green, LOW);
+    digitalWrite(yellow, LOW);
+    Serial.print("Slot 3 is Occupied");
+    delay(2000);
+    lcd.clear();
+  } 
+  // else {
+  // digitalWrite(redLed3, LOW);
+  // digitalWrite(greenLed3, HIGH);
+  // }
+  else
+  {
+    lcd.setCursor(0, 0);
+    lcd.print("All Slots ");
+    lcd.setCursor(0, 1);
+    lcd.print("are free");
+    digitalWrite(red, LOW);
+    digitalWrite(green, LOW);
+    digitalWrite(yellow, LOW);
+    Serial.print("All Slots are free " );
+    delay(2000);
+    lcd.clear();
+  
+  }
+}
